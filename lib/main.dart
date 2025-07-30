@@ -13,7 +13,7 @@ class LogViewerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'LSE Log Viewer',
+      title: 'Log Viewer (UDP)',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
