@@ -21,7 +21,7 @@ def send_udp_message(message, host='localhost', port=8888):
         return False
 
 def main():
-    print("=== UDP Log Viewer 테스트 ===")
+    print("=== UDP Log Viewer 테스트 (Host: 127.0.0.1) ===")
     print("Flutter 앱에서 서버를 시작한 후 Enter를 눌러주세요...")
     input()
     
