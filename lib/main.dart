@@ -1,9 +1,15 @@
+// ignore_for_file: file_names, constant_identifier_names, avoid_print, camel_case_types, unused_element, library_private_types_in_public_api, non_constant_identifier_names
+
 import 'package:flutter/material.dart';
+
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 
 void main() {
+  // Flutter 바인딩 초기화
+  WidgetsFlutterBinding.ensureInitialized();
+
   runApp(const LogViewerApp());
 }
 
@@ -54,6 +60,8 @@ class _LogViewerHomePageState extends State<LogViewerHomePage> {
   }
 
   void _startAutoScroll() {
+    // 암호화 키 생성
+
     _autoScrollTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_scrollController.hasClients && _logs.isNotEmpty) {
         _scrollController.animateTo(
