@@ -213,48 +213,55 @@ class _LogViewerHomePageState extends State<LogViewerHomePage> {
 
           // 로그 목록
           Expanded(
-            child: _logs.isEmpty
-                ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.info_outline, size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text(
-                          '로그가 없습니다',
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
-                        ),
-                        Text(
-                          '서버를 시작하고 UDP 메시지를 받아보세요',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ],
+            child: Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: _logs.isEmpty
+                  ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            '로그가 없습니다',
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                          Text(
+                            '서버를 시작하고 UDP 메시지를 받아보세요',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: _scrollController,
+                      itemCount: _logs.length,
+                      itemBuilder: (context, index) {
+                        final log = _logs[index];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Text(
+                            '[${log.sender}]-${log.message}',
+                            style: const TextStyle(
+                              color: Colors.green,
+                              fontSize: 12,
+                              fontFamily: 'D2Coding',
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    itemCount: _logs.length,
-                    itemBuilder: (context, index) {
-                      final log = _logs[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        child: ListTile(
-                          title: Text(
-                            log.message,
-                            style: const TextStyle(fontFamily: 'D2Coding'),
-                          ),
-                          subtitle: Text(
-                            '${log.timestamp.toString().substring(11, 19)} | ${log.sender}',
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                          leading: const Icon(Icons.message),
-                        ),
-                      );
-                    },
-                  ),
+            ),
           ),
         ],
       ),
