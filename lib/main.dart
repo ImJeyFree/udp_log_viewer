@@ -254,7 +254,7 @@ class _LogViewerHomePageState extends State<LogViewerHomePage> {
                             '[${log.sender}]-${log.message}',
                             style: const TextStyle(
                               color: Colors.green,
-                              fontSize: 12,
+                              fontSize: 14,
                               fontFamily: 'D2Coding',
                             ),
                           ),
