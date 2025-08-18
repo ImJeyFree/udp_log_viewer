@@ -60,14 +60,13 @@ class _LogViewerHomePageState extends State<LogViewerHomePage> {
   }
 
   void _startAutoScroll() {
-    // 암호화 키 생성
-
     _autoScrollTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_scrollController.hasClients && _logs.isNotEmpty) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
           duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
+          // duration: const Duration(seconds: 1),
+          curve: Curves.ease,
         );
       }
     });
@@ -248,6 +247,10 @@ class _LogViewerHomePageState extends State<LogViewerHomePage> {
                       itemCount: _logs.length,
                       itemBuilder: (context, index) {
                         final log = _logs[index];
+                        // _scrollController.jumpTo(
+                        //   _scrollController.position.maxScrollExtent,
+                        // );
+
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 2),
                           child: Text(
