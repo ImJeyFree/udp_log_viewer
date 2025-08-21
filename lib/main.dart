@@ -251,15 +251,13 @@ class _LogViewerHomePageState extends State<LogViewerHomePage> {
                         //   _scrollController.position.maxScrollExtent,
                         // );
 
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Text(
-                            '[${log.sender}]-${log.message}',
-                            style: const TextStyle(
-                              color: Colors.green,
-                              fontSize: 14,
-                              fontFamily: 'D2Coding',
-                            ),
+                        return Text(
+                          '[${log.sender}]-${log.message}',
+                          style: const TextStyle(
+                            color: Colors.green,
+                            fontSize: 14,
+                            fontFamily: 'D2Coding',
+                            height: 1.1,
                           ),
                         );
                       },
