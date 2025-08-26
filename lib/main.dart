@@ -10,7 +10,16 @@ void main() {
   // Flutter 바인딩 초기화
   WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(const LogViewerApp());
+  runApp(
+    MaterialApp(
+      title: 'UDP Log Viewer',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
+      ),
+      home: const LogViewerApp(),
+    ),
+  );
 }
 
 class LogViewerApp extends StatefulWidget {
@@ -155,170 +164,156 @@ class _LogViewerAppState extends State<LogViewerApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'UDP Log Viewer',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      home: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('UDP Log Viewer'),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _isServerRunning
-                      ? Colors.green.shade100
-                      : Colors.red.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _isServerRunning ? Colors.green : Colors.red,
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _isServerRunning ? Icons.circle : Icons.circle_outlined,
-                      size: 10,
-                      color: _isServerRunning ? Colors.green : Colors.red,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      _status,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: _isServerRunning
-                            ? Colors.green.shade800
-                            : Colors.red.shade800,
-                      ),
-                    ),
-                  ],
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('UDP Log Viewer'),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _isServerRunning
+                    ? Colors.green.shade100
+                    : Colors.red.shade100,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _isServerRunning ? Colors.green : Colors.red,
+                  width: 1,
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade200, width: 1),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.network_check,
-                      size: 10,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _isServerRunning ? Icons.circle : Icons.circle_outlined,
+                    size: 10,
+                    color: _isServerRunning ? Colors.green : Colors.red,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _status,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: _isServerRunning
+                          ? Colors.green.shade800
+                          : Colors.red.shade800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade200, width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.network_check, size: 10, color: Colors.blue),
+                  const SizedBox(width: 2),
+                  Text(
+                    '$_port',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
                       color: Colors.blue,
                     ),
-                    const SizedBox(width: 2),
-                    Text(
-                      '$_port',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
+          ],
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: _changePort,
+            tooltip: '포트 설정',
           ),
-          centerTitle: true,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: _changePort,
-              tooltip: '포트 설정',
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            // 로그 목록
-            Expanded(
-              child: Container(
-                margin: const EdgeInsets.all(0),
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: _logs.isEmpty
-                    ? const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              size: 64,
-                              color: Colors.grey,
-                            ),
-                            SizedBox(height: 16),
-                            Text(
-                              '로그가 없습니다',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            Text(
-                              '서버를 시작하고 UDP 메시지를 받아보세요',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        itemCount: _logs.length,
-                        itemBuilder: (context, index) {
-                          final log = _logs[index];
-
-                          return Text(
-                            '[${log.sender}]-${log.message}',
-                            style: const TextStyle(
-                              color: Colors.green,
-                              fontSize: 14,
-                              fontFamily: 'D2Coding',
-                              height: 1.1,
-                            ),
-                          );
-                        },
-                      ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // 로그 목록
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.all(0),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
               ),
+              child: _logs.isEmpty
+                  ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            '로그가 없습니다',
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                          Text(
+                            '서버를 시작하고 UDP 메시지를 받아보세요',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: _scrollController,
+                      itemCount: _logs.length,
+                      itemBuilder: (context, index) {
+                        final log = _logs[index];
+
+                        return Text(
+                          '[${log.sender}]-${log.message}',
+                          style: const TextStyle(
+                            color: Colors.green,
+                            fontSize: 14,
+                            fontFamily: 'D2Coding',
+                            height: 1.1,
+                          ),
+                        );
+                      },
+                    ),
             ),
-          ],
-        ),
-        floatingActionButton: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            FloatingActionButton(
-              onPressed: _clearLogs,
-              tooltip: '로그 지우기',
-              heroTag: 'clear',
-              child: const Icon(Icons.clear_all),
-            ),
-            const SizedBox(width: 16),
-            FloatingActionButton(
-              onPressed: _isServerRunning ? _stopServer : _startServer,
-              tooltip: _isServerRunning ? '서버 중지' : '서버 시작',
-              heroTag: 'server',
-              backgroundColor: _isServerRunning ? Colors.red : Colors.green,
-              child: Icon(_isServerRunning ? Icons.stop : Icons.play_arrow),
-            ),
-          ],
-        ),
+          ),
+        ],
+      ),
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: _clearLogs,
+            tooltip: '로그 지우기',
+            heroTag: 'clear',
+            child: const Icon(Icons.clear_all),
+          ),
+          const SizedBox(width: 16),
+          FloatingActionButton(
+            onPressed: _isServerRunning ? _stopServer : _startServer,
+            tooltip: _isServerRunning ? '서버 중지' : '서버 시작',
+            heroTag: 'server',
+            backgroundColor: _isServerRunning ? Colors.red : Colors.green,
+            child: Icon(_isServerRunning ? Icons.stop : Icons.play_arrow),
+          ),
+        ],
       ),
     );
   }
