@@ -22,6 +22,7 @@ void main() {
   );
 }
 
+/// UDP 메시지를 수신해서 콘솔 스타일의 화면에 보여주는 메인 화면입니다.
 class LogViewerApp extends StatefulWidget {
   const LogViewerApp({super.key});
 
@@ -30,12 +31,25 @@ class LogViewerApp extends StatefulWidget {
 }
 
 class _LogViewerAppState extends State<LogViewerApp> {
+  /// 화면에 표시할 수신 로그 목록입니다. 오래된 로그는 1000개 제한에 맞춰 제거합니다.
   final List<LogEntry> _logs = [];
+
+  /// 새 로그가 들어왔을 때 로그 목록을 아래로 이동시키기 위한 컨트롤러입니다.
   final ScrollController _scrollController = ScrollController();
+
+  /// 현재 열려 있는 UDP 수신 소켓입니다. 서버가 중지되면 null로 되돌립니다.
   RawDatagramSocket? _socket;
+
+  /// 시작/중지 버튼과 상태 배지를 갱신하기 위한 서버 실행 상태입니다.
   bool _isServerRunning = false;
+
+  /// UDP 서버가 바인딩할 포트입니다.
   int _port = 8888;
+
+  /// AppBar에 표시할 서버 상태 메시지입니다.
   String _status = '서버가 중지되었습니다';
+
+  /// 로그가 계속 들어올 때 화면 하단을 유지하기 위한 주기 타이머입니다.
   Timer? _autoScrollTimer;
 
   @override
@@ -46,12 +60,15 @@ class _LogViewerAppState extends State<LogViewerApp> {
 
   @override
   void dispose() {
-    _stopServer();
+    // dispose 중에는 setState를 호출하지 않고 리소스만 정리합니다.
+    _socket?.close();
+    _socket = null;
     _autoScrollTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
 
+  /// 로그 목록을 1초마다 맨 아래로 이동시켜 최신 로그를 볼 수 있게 합니다.
   void _startAutoScroll() {
     _autoScrollTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_scrollController.hasClients && _logs.isNotEmpty) {
@@ -64,8 +81,10 @@ class _LogViewerAppState extends State<LogViewerApp> {
     });
   }
 
+  /// 지정된 포트에서 UDP 서버를 시작하고 들어오는 datagram을 로그로 추가합니다.
   Future<void> _startServer() async {
     try {
+      // 모든 IPv4 인터페이스에서 UDP 패킷을 받을 수 있도록 바인딩합니다.
       _socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, _port);
       setState(() {
         _isServerRunning = true;
@@ -74,6 +93,7 @@ class _LogViewerAppState extends State<LogViewerApp> {
 
       _socket!.listen((RawSocketEvent event) {
         if (event == RawSocketEvent.read) {
+          // read 이벤트마다 큐에 쌓인 datagram을 하나씩 꺼냅니다.
           final datagram = _socket!.receive();
           if (datagram != null) {
             // UTF-8 인코딩으로 한글 처리
@@ -89,6 +109,7 @@ class _LogViewerAppState extends State<LogViewerApp> {
             final sender = '${datagram.address.address}:${datagram.port}';
 
             setState(() {
+              // 송신자 주소와 메시지를 함께 보관해 화면 표시와 추후 확장에 사용합니다.
               _logs.add(
                 LogEntry(
                   message: message,
@@ -112,6 +133,7 @@ class _LogViewerAppState extends State<LogViewerApp> {
     }
   }
 
+  /// UDP 소켓을 닫고 화면 상태를 중지 상태로 되돌립니다.
   void _stopServer() {
     _socket?.close();
     _socket = null;
@@ -121,12 +143,14 @@ class _LogViewerAppState extends State<LogViewerApp> {
     });
   }
 
+  /// 현재 화면에 쌓인 로그만 삭제합니다. 서버 실행 상태에는 영향을 주지 않습니다.
   void _clearLogs() {
     setState(() {
       _logs.clear();
     });
   }
 
+  /// 포트 변경 다이얼로그를 열고, 서버 실행 중이면 새 포트로 재시작합니다.
   void _changePort() {
     showDialog(
       context: context,
@@ -140,6 +164,7 @@ class _LogViewerAppState extends State<LogViewerApp> {
           ),
           onSubmitted: (value) {
             final newPort = int.tryParse(value);
+            // UDP/TCP 포트의 유효 범위는 1부터 65535까지입니다.
             if (newPort != null && newPort > 0 && newPort < 65536) {
               setState(() {
                 _port = newPort;
@@ -172,6 +197,7 @@ class _LogViewerAppState extends State<LogViewerApp> {
           children: [
             const Text('UDP Log Viewer'),
             const SizedBox(width: 8),
+            // 서버 실행 여부와 상태 메시지를 보여주는 배지입니다.
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
@@ -207,6 +233,7 @@ class _LogViewerAppState extends State<LogViewerApp> {
               ),
             ),
             const SizedBox(width: 8),
+            // 현재 수신 포트를 작게 표시합니다.
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
@@ -254,6 +281,7 @@ class _LogViewerAppState extends State<LogViewerApp> {
                 border: Border.all(color: Colors.grey.shade300),
               ),
               child: _logs.isEmpty
+                  // 로그가 없을 때는 사용자가 다음 행동을 알 수 있도록 빈 상태를 표시합니다.
                   ? const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -275,6 +303,7 @@ class _LogViewerAppState extends State<LogViewerApp> {
                         ],
                       ),
                     )
+                  // 로그가 있으면 콘솔처럼 한 줄씩 이어 붙여 표시합니다.
                   : ListView.builder(
                       controller: _scrollController,
                       itemCount: _logs.length,
@@ -299,6 +328,7 @@ class _LogViewerAppState extends State<LogViewerApp> {
       floatingActionButton: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
+          // 수신된 로그를 모두 지우는 버튼입니다.
           FloatingActionButton(
             onPressed: _clearLogs,
             tooltip: '로그 지우기',
@@ -306,6 +336,7 @@ class _LogViewerAppState extends State<LogViewerApp> {
             child: const Icon(Icons.clear_all),
           ),
           const SizedBox(width: 16),
+          // UDP 서버의 시작/중지를 토글하는 버튼입니다.
           FloatingActionButton(
             onPressed: _isServerRunning ? _stopServer : _startServer,
             tooltip: _isServerRunning ? '서버 중지' : '서버 시작',
@@ -319,9 +350,15 @@ class _LogViewerAppState extends State<LogViewerApp> {
   }
 }
 
+/// 수신한 UDP 메시지 한 건을 표현하는 데이터 모델입니다.
 class LogEntry {
+  /// 수신한 메시지 본문입니다.
   final String message;
+
+  /// 메시지를 앱이 수신한 시각입니다.
   final DateTime timestamp;
+
+  /// 송신자의 IP와 포트를 합친 문자열입니다.
   final String sender;
 
   LogEntry({
