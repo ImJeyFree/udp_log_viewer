@@ -87,7 +87,7 @@ def main():
         default="auto",
         help="수신 대상 IP (기본: auto -> 이 머신 후보 IP 중 우선 순위 선택)",
     )
-    parser.add_argument("--port", type=int, default=9000, help="UDP 포트 (기본: 9000)")
+    parser.add_argument("--port", type=int, default=8888, help="UDP 포트 (기본: 8888)")
     parser.add_argument(
         "--count",
         type=int,
