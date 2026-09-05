@@ -1,4 +1,4 @@
-﻿// ignore_for_file: avoid_print, no_leading_underscores_for_local_identifiers
+// ignore_for_file: avoid_print, no_leading_underscores_for_local_identifiers
 
 import 'dart:async';
 import 'dart:convert';
@@ -8,17 +8,18 @@ import 'package:flutter/material.dart';
 
 import '../models/udp_log_entry.dart';
 
-class UdpLogViewerPage extends StatefulWidget {
-  const UdpLogViewerPage({super.key});
+class UdpLogHomePage extends StatefulWidget {
+  const UdpLogHomePage({super.key});
 
   @override
-  State<UdpLogViewerPage> createState() => _UdpLogViewerPageState();
+  State<UdpLogHomePage> createState() => _UdpLogHomePageState();
 }
 
-class _UdpLogViewerPageState extends State<UdpLogViewerPage> {
+class _UdpLogHomePageState extends State<UdpLogHomePage> {
   final List<UdpLogEntry> _logs = [];
   final ScrollController _scrollController = ScrollController();
   RawDatagramSocket? _socket;
+  late final TextEditingController _portController;
   bool _isServerRunning = false;
   int _port = 8888;
   String _server = '0.0.0.0';
@@ -27,17 +28,71 @@ class _UdpLogViewerPageState extends State<UdpLogViewerPage> {
 
   @override
   void initState() {
+    _portController = TextEditingController(text: '$_port');
     super.initState();
     _startAutoScroll();
   }
 
   @override
   void dispose() {
+    _portController.dispose();
     _socket?.close();
     _socket = null;
     _autoScrollTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  int? _parsePort(String value) {
+    final parsed = int.tryParse(value);
+    if (parsed == null || parsed <= 0 || parsed >= 65536) {
+      return null;
+    }
+    return parsed;
+  }
+
+  void _applyPort({required bool restartIfRunning}) {
+    final parsed = _parsePort(_portController.text);
+    if (parsed == null) {
+      _portController.text = '$_port';
+      return;
+    }
+
+    if (parsed == _port) {
+      return;
+    }
+
+    setState(() {
+      _port = parsed;
+      _portController.text = '$_port';
+    });
+
+    if (restartIfRunning && _isServerRunning) {
+      _stopServer();
+      _startServer();
+    }
+  }
+
+  void _toggleServer() {
+    final parsed = _parsePort(_portController.text);
+    if (parsed == null) {
+      _portController.text = '$_port';
+      return;
+    }
+
+    if (parsed != _port) {
+      setState(() {
+        _port = parsed;
+        _portController.text = '$_port';
+      });
+    }
+
+    if (_isServerRunning) {
+      _stopServer();
+      return;
+    }
+
+    _startServer();
   }
 
   void _startAutoScroll() {
@@ -143,38 +198,7 @@ class _UdpLogViewerPageState extends State<UdpLogViewerPage> {
   }
 
   void _changePort() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Change Port'),
-        content: TextField(
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'UDP Port',
-            hintText: '8888',
-          ),
-          onSubmitted: (value) {
-            final newPort = int.tryParse(value);
-            if (newPort != null && newPort > 0 && newPort < 65536) {
-              setState(() {
-                _port = newPort;
-              });
-              Navigator.of(context).pop();
-              if (_isServerRunning) {
-                _stopServer();
-                _startServer();
-              }
-            }
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
+    _applyPort(restartIfRunning: true);
   }
 
   @override
@@ -182,71 +206,115 @@ class _UdpLogViewerPageState extends State<UdpLogViewerPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('UDP Log Viewer'),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: _isServerRunning ? Colors.green.shade100 : Colors.red.shade100,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _isServerRunning ? Colors.green : Colors.red,
-                  width: 1,
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('UDP Log Viewer'),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _isServerRunning
+                      ? Colors.green.shade100
+                      : Colors.red.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _isServerRunning ? Colors.green : Colors.red,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _isServerRunning ? Icons.circle : Icons.circle_outlined,
+                      size: 10,
+                      color: _isServerRunning ? Colors.green : Colors.red,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _status,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: _isServerRunning
+                            ? Colors.green.shade800
+                            : Colors.red.shade800,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      maxLines: 1,
+                    ),
+                  ],
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _isServerRunning ? Icons.circle : Icons.circle_outlined,
-                    size: 10,
-                    color: _isServerRunning ? Colors.green : Colors.red,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _status,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: _isServerRunning
-                          ? Colors.green.shade800
-                          : Colors.red.shade800,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade200, width: 1),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.network_check, size: 10, color: Colors.blue),
-                  const SizedBox(width: 2),
-                  Text(
-                    '$_port',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200, width: 1),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.network_check,
+                      size: 10,
                       color: Colors.blue,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 2),
+                    Text(
+                      '$_port',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         centerTitle: true,
         actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('UDP 포트', style: TextStyle(fontSize: 12)),
+                const SizedBox(width: 6),
+                SizedBox(
+                  width: 72,
+                  child: TextField(
+                    controller: _portController,
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    onSubmitted: (_) =>
+                        _applyPort(restartIfRunning: _isServerRunning),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 4,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                ElevatedButton(
+                  onPressed: _toggleServer,
+                  child: Text(_isServerRunning ? '중지' : '시작'),
+                ),
+              ],
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: _changePort,

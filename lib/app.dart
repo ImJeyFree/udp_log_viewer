@@ -1,6 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
-import 'pages/udp_log_viewer_page.dart';
+import 'ui/udp_log_home_page.dart';
 
 class UdpLogViewerApp extends StatelessWidget {
   const UdpLogViewerApp({super.key});
@@ -13,7 +13,7 @@ class UdpLogViewerApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: const UdpLogViewerPage(),
+      home: const UdpLogHomePage(),
     );
   }
 }
